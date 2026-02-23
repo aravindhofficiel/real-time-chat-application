@@ -3,62 +3,71 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
-const messageRoutes = require("./routes/messageRoutes");
 const userRoutes = require("./routes/userRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 const Message = require("./models/Message");
+
+/* =========================
+   CONNECT DATABASE
+========================= */
 
 connectDB();
 
 const app = express();
 
-/* ========================
-   ✅ PRODUCTION CORS FIX
-======================== */
-
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://real-time-chat-application-zeta.vercel.app",
-  "https://real-time-chat-application-git-main-aravindhs-projects-fbb6603e.vercel.app"
-];
+/* =========================
+   GLOBAL CORS FIX
+   (Allows Vercel + Localhost)
+========================= */
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: true, // allow all origins (safe for your app)
     credentials: true
   })
 );
 
 app.use(express.json());
 
+/* =========================
+   ROUTES
+========================= */
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 
+/* =========================
+   CREATE SERVER
+========================= */
+
 const server = http.createServer(app);
 
-/* ========================
-   ✅ SOCKET CORS FIX
-======================== */
+/* =========================
+   SOCKET.IO SETUP
+========================= */
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
-/* ========================
-   ✅ ONLINE USERS TRACKING
-======================== */
+/* =========================
+   ONLINE USERS MAP
+========================= */
 
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  /* JOIN PRIVATE ROOM */
   socket.on("joinRoom", (userId) => {
     socket.join(userId);
 
@@ -67,6 +76,7 @@ io.on("connection", (socket) => {
     io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
   });
 
+  /* SEND MESSAGE */
   socket.on("sendMessage", async (data) => {
     try {
       const message = await Message.create({
@@ -75,13 +85,18 @@ io.on("connection", (socket) => {
         text: data.text
       });
 
+      // Send to receiver
       io.to(data.receiver).emit("receiveMessage", message);
+
+      // Send back to sender
       io.to(data.sender).emit("receiveMessage", message);
-    } catch (err) {
-      console.error("Message error:", err);
+
+    } catch (error) {
+      console.error("Message error:", error);
     }
   });
 
+  /* DISCONNECT */
   socket.on("disconnect", () => {
     for (let [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
@@ -95,6 +110,12 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(process.env.PORT, () =>
-  console.log("Server running on port " + process.env.PORT)
-);
+/* =========================
+   START SERVER
+========================= */
+
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
