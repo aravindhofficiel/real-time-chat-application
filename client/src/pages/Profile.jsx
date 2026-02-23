@@ -10,26 +10,25 @@ export default function Profile() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const saveProfile = async () => {
-    try {
-      setLoading(true);
+ const saveProfile = async () => {
+  try {
+    setLoading(true);
 
-      await axios.put(
-        `http://localhost:5000/api/users/${storedUser._id}`,
-        { name, password }
-      );
+    await axios.put(
+      `${import.meta.env.VITE_BACKEND_URL}/api/users/${storedUser._id}`,
+      { name, password }
+    );
 
-      const updatedUser = { ...storedUser, name };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+    const updatedUser = { ...storedUser, name };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      alert("Profile updated");
-    } catch {
-      alert("Update failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    alert("Profile updated");
+  } catch (err) {
+    alert("Update failed");
+  } finally {
+    setLoading(false);
+  }
+};
   const logout = () => {
     localStorage.clear();
     navigate("/");

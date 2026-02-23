@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const socket = io("http://localhost:5000");
+const socket = io(import.meta.env.VITE_BACKEND_URL);
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ export default function Chat() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/users");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/users`);
      setUsers(res.data);
     } catch (err) {
       console.error("Users fetch error", err);
@@ -78,7 +78,7 @@ export default function Chat() {
   const fetchMessages = async (receiverId) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/messages/${user._id}/${receiverId}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/messages/${user._id}/${receiverId}`
       );
       setMessages(res.data);
     } catch (err) {

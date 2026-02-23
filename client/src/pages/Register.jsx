@@ -12,16 +12,17 @@ export default function Register() {
   const strength = getStrength(password);
 
   const register = async () => {
-    try {
-      await axios.post(
-        "http://localhost:5000/api/auth/register",
-        { name, email, password }
-      );
-      navigate("/");
-    } catch {
-      alert("Registration failed");
-    }
-  };
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
+      { name, email, password }
+    );
+
+    navigate("/");
+  } catch (err) {
+    alert("Registration failed");
+  }
+};
 
   return (
     <div className={dark ? "auth-container dark" : "auth-container"}>
