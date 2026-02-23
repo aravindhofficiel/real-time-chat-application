@@ -5,29 +5,55 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
-const Message = require("./models/Message");
 const messageRoutes = require("./routes/messageRoutes");
 const userRoutes = require("./routes/userRoutes");
-const onlineUsers = new Map();
-
+const Message = require("./models/Message");
 
 connectDB();
 
 const app = express();
-app.use(cors());
+
+/* ========================
+   ✅ PRODUCTION CORS FIX
+======================== */
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://real-time-chat-application-zeta.vercel.app"
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true
+  })
+);
+
 app.use(express.json());
-app.use("/api/messages", messageRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/messages", messageRoutes);
 
 const server = http.createServer(app);
 
-
+/* ========================
+   ✅ SOCKET CORS FIX
+======================== */
 
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
+
+/* ========================
+   ✅ ONLINE USERS TRACKING
+======================== */
+
+const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
@@ -41,14 +67,18 @@ io.on("connection", (socket) => {
   });
 
   socket.on("sendMessage", async (data) => {
-    const message = await Message.create({
-      sender: data.sender,
-      receiver: data.receiver,
-      text: data.text,
-    });
+    try {
+      const message = await Message.create({
+        sender: data.sender,
+        receiver: data.receiver,
+        text: data.text
+      });
 
-    io.to(data.receiver).emit("receiveMessage", message);
-    io.to(data.sender).emit("receiveMessage", message);
+      io.to(data.receiver).emit("receiveMessage", message);
+      io.to(data.sender).emit("receiveMessage", message);
+    } catch (err) {
+      console.error("Message error:", err);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -63,6 +93,7 @@ io.on("connection", (socket) => {
     console.log("User disconnected");
   });
 });
+
 server.listen(process.env.PORT, () =>
   console.log("Server running on port " + process.env.PORT)
 );
