@@ -19,7 +19,8 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://real-time-chat-application-zeta.vercel.app"
+  "https://real-time-chat-application-zeta.vercel.app",
+  "https://real-time-chat-application-git-main-aravindhs-projects-fbb6603e.vercel.app"
 ];
 
 app.use(
