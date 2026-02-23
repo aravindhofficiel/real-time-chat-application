@@ -10,21 +10,19 @@ export default function Login() {
 
   const login = async () => {
     try {
-      const login = async () => {
-  try {
-    const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
-      { email, password }
-    );
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
+        { email, password }
+      );
 
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
-    navigate("/chat");
-  } catch (err) {
-    alert("Invalid credentials");
-  }
-};
+      navigate("/chat");
+    } catch (err) {
+      alert("Invalid credentials");
+    }
+  };
 
   return (
     <div className={dark ? "auth-container dark" : "auth-container"}>
